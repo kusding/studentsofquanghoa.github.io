@@ -1,16 +1,20 @@
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import 'firebase/firestore';
+
 // Firebase configuration
 var firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCLuMvQ2OSLGRNhEKT5zlvOQH_pqB4r2cc",
+    authDomain: "quanghoastudent.firebaseapp.com",
+    projectId: "quanghoastudent",
+    storageBucket: "quanghoastudent.appspot.com",
+    messagingSenderId: "792199693508",
+    appId: "1:792199693508:web:9e91a6ae8ebd3849d6ed0b"
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-var db = firebase.firestore();
-var auth = firebase.auth();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // Handle sign up
 document.getElementById('signup-form').addEventListener('submit', function(e) {
@@ -22,6 +26,7 @@ document.getElementById('signup-form').addEventListener('submit', function(e) {
         window.location = 'index.html';
     }).catch(err => {
         console.error('Error signing up:', err.message);
+        alert('Error signing up: ' + err.message);
     });
 });
 
@@ -35,6 +40,7 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
         window.location = 'index.html';
     }).catch(err => {
         console.error('Error logging in:', err.message);
+        alert('Error logging in: ' + err.message);
     });
 });
 
@@ -54,35 +60,36 @@ document.getElementById('post-form').addEventListener('submit', function(e) {
             fetchPosts();
         }).catch(err => {
             console.error('Error creating post:', err.message);
+            alert('Error creating post: ' + err.message);
         });
     } else {
         alert('You must be logged in to create a post.');
     }
 });
 
-// Fetch and display posts
+auth.onAuthStateChanged(user => {
+    if (user) {
+        fetchPosts();
+        document.getElementById('create-post').style.display = 'block';
+    } else {
+        document.getElementById('create-post').style.display = 'none';
+    }
+});
+
 function fetchPosts() {
-    var postsContainer = document.getElementById('posts');
-    postsContainer.innerHTML = '';
     db.collection('posts').orderBy('created_at', 'desc').get().then(snapshot => {
+        let postsHtml = '';
         snapshot.forEach(doc => {
-            var post = doc.data();
-            var postElement = document.createElement('div');
-            postElement.className = 'post';
-            postElement.innerHTML = `
+            const post = doc.data();
+            postsHtml += `<div class="post">
+                <h3>${post.author}</h3>
                 <p>${post.content}</p>
-                <small>by ${post.author}</small>
-            `;
-            postsContainer.appendChild(postElement);
+                <small>${post.created_at.toDate()}</small>
+            </div>`;
         });
+        document.getElementById('posts').innerHTML = postsHtml;
     }).catch(err => {
         console.error('Error fetching posts:', err.message);
     });
 }
 
-// Check auth state and fetch posts if logged in
-auth.onAuthStateChanged(user => {
-    if (user) {
-        fetchPosts();
-    }
-});
